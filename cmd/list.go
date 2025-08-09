@@ -54,7 +54,7 @@ func parseList() *listFlag {
 	}
 }
 
-func (h *handler) get(cmd *listFlag) ([]todo, error) {
+func (app *App) get(cmd *listFlag) ([]todo, error) {
 	query := `
     SELECT id, text, priority, status, due, tag, created_at 
     FROM todos 
@@ -89,7 +89,7 @@ func (h *handler) get(cmd *listFlag) ([]todo, error) {
 	// Order the results
 	query += " ORDER BY priority DESC"
 
-	rows, err := h.db.Query(query, args...)
+	rows, err := app.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func isValidCreated(cmd *listFlag) bool {
 	return true
 }
 
-func (h *handler) list() {
+func (app *App) list() {
 	cmd := parseList()
 	if isValid := service.Validate(cmd); !isValid {
 		os.Exit(1)
@@ -148,7 +148,7 @@ func (h *handler) list() {
 		fmt.Fprintf(os.Stderr, "Invalid created date %v\n", cmd.created)
 		os.Exit(1)
 	}
-	todos, err := h.get(cmd)
+	todos, err := app.get(cmd)
 	if err != nil {
 		log.Fatal(err)
 	}

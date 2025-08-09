@@ -5,19 +5,19 @@ import (
 	"log"
 	"os"
 
-	"github.com/benpsk/todo/cmd/notification"
+	"github.com/benpsk/todo/cmd/daemon"
 	"github.com/benpsk/todo/cmd/ui"
 	"github.com/benpsk/todo/db"
 )
 
 const dbPath = "./db/todos.db"
 
-type handler struct {
+type App struct {
 	db *sql.DB
 }
 
-func new(db *sql.DB) *handler {
-	return &handler{db: db}
+func new(db *sql.DB) *App {
+	return &App{db: db}
 }
 
 func Execute() {
@@ -30,22 +30,23 @@ func Execute() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	handler := new(db)
+	app := new(db)
+	d := daemon.New(db)
 
 	cmd := os.Args[1]
 	switch cmd {
 	case "add":
-		handler.add()
+		app.add()
 	case "list", "ls":
-		handler.list()
+		app.list()
 	case "delete":
-		handler.delete()
+		app.delete()
 	case "update":
-		handler.update()
+		app.update()
 	case "--help", "-h":
 		ui.Usage()
-	case "cron":
-		notification.Handle()
+	case "daemon":
+		d.Handle()
 	default:
 		ui.Usage()
 	}

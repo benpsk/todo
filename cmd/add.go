@@ -47,25 +47,25 @@ func parseAdd() *addFlag {
 	}
 }
 
-func (h *handler) save(cmd *addFlag) error {
+func (app *App) save(cmd *addFlag) error {
 	if cmd.status == "" {
 		cmd.status = "1" // pending
 	}
 	if cmd.priority == "" {
 		cmd.priority = "2" // medium
 	}
-	_, err := h.db.Exec(`
+	_, err := app.db.Exec(`
     insert into todos(text, status, priority, due, tag) values(?,?,?,?,?)
   `, cmd.text, cmd.status, cmd.priority, &cmd.due, cmd.tag)
 	return err
 }
 
-func (h *handler) add() {
+func (app *App) add() {
 	cmd := parseAdd()
 	if isValid := service.Validate(cmd); !isValid {
 		os.Exit(1)
 	}
-	if err := h.save(cmd); err != nil {
+	if err := app.save(cmd); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Success: Todo Save!")

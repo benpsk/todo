@@ -68,7 +68,7 @@ func parseUpdate() *updateFlag {
 	}
 }
 
-func (h *handler) updateTodo(cmd *updateFlag) error {
+func (app *App) updateTodo(cmd *updateFlag) error {
 	query := `
     update todos 
     set updated_at = CURRENT_TIMESTAMP
@@ -86,7 +86,7 @@ func (h *handler) updateTodo(cmd *updateFlag) error {
 		query += ", priority=?"
 		args = append(args, cmd.priority)
 	}
-	if cmd.due != nil {
+	if *cmd.due != "" {
 		query += ", due=?"
 		args = append(args, cmd.due)
 	}
@@ -101,16 +101,16 @@ func (h *handler) updateTodo(cmd *updateFlag) error {
 	}
 	query += " where id in (" + strings.Join(placeholders, ",") + ")"
 
-	_, err := h.db.Exec(query, args...)
+	_, err := app.db.Exec(query, args...)
 	return err
 }
 
-func (h *handler) update() {
+func (app *App) update() {
 	cmd := parseUpdate()
 	if isValid := service.Validate(cmd); !isValid {
 		os.Exit(1)
 	}
-	if err := h.updateTodo(cmd); err != nil {
+	if err := app.updateTodo(cmd); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Success: Todo Updated!")

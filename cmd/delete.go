@@ -10,7 +10,7 @@ import (
 	"github.com/benpsk/todo/cmd/service"
 )
 
-func (h *handler) delete() {
+func (app *App) delete() {
 	fs := flag.NewFlagSet("delete", flag.ExitOnError)
 	fs.Parse(os.Args[2:])
 	ids := fs.Args()
@@ -19,13 +19,13 @@ func (h *handler) delete() {
 		os.Exit(1)
 	}
   idList := service.ValidateIds(ids)
-	if err := h.deleteTodo(idList); err != nil {
+	if err := app.deleteTodo(idList); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Deleted id:", ids)
 }
 
-func (h *handler) deleteTodo(ids []int) error {
+func (app *App) deleteTodo(ids []int) error {
 	placeholders := make([]string, len(ids))
 	args := make([]interface{}, len(ids))
 	for i, id := range ids {
@@ -34,6 +34,6 @@ func (h *handler) deleteTodo(ids []int) error {
 	}
 	query := "DELETE FROM todos WHERE id IN (" + strings.Join(placeholders, ",") + ")"
 
-	_, err := h.db.Exec(query, args...)
+	_, err := app.db.Exec(query, args...)
 	return err
 }
