@@ -90,7 +90,7 @@ func (app *App) updateTodo(cmd *updateFlag) error {
 		query += ", due=?"
 		args = append(args, cmd.due)
 	}
-	if cmd.tag != nil {
+	if *cmd.tag != "" {
 		query += ", tag=?"
 		args = append(args, cmd.tag)
 	}

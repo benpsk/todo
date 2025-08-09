@@ -20,7 +20,7 @@ Examples:
     todo add "new task" --priority=high --status=processing --due=fri --tag=project1,ui
     todo add "new task" -p high -s processing -d fri-18:00 -t project1
 
-  List tasks:
+  List tasks: [filter by last 7 due days]
     todo list --status=done --priority=high --due=wed-20:19 --created=wed --find=task1
     todo ls -s done -p high -d wed-20:19 -c wed -f task1
 
@@ -34,9 +34,9 @@ Examples:
 Options:
   -p, --priority   Set task priority (low|medium|high)
   -s, --status     Set task status (pending|processing|done)
-  -d, --due        Set due date (e.g. fri, fri-18:00, 2025-01-01, 2025-01-01 23:59,)
-  -t, --tag        Add one or more tags (comma separate, eg. p1,ui)
-  -c, --created    Filter by creation date (eg. fri, 2025-01-01) 
+  -d, --due        Set due date (e.g. 2025, 2025-01, fri, 2025-01-01)
+  -t, --tag        Add one or more tags (eg. "p1,ui")
+  -c, --created    Filter by creation date (eg. 2025, 2025-01, fri, 2025-01-01) 
   -f, --find       Search for keyword in task 
 
 Enjoy!`)

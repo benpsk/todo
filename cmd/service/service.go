@@ -61,51 +61,66 @@ func Validate(cmd Flagger) bool {
 }
 
 func isValidDueDate(cmd Flagger) bool {
-	dueFormat1 := "2006-01-02"       // for "2025-08-20"
-	dueFormat2 := "2006-01-02 15:04" // for "2025-08-20 19:10"
-	dueFormat3 := "15:04"            // for "19:20"
+	daysDiff, isSuccess := IsValidateDate(*cmd.GetDue())
+	if !isSuccess {
+		return false
+	}
+	// default no value change
+	if daysDiff == 99 {
+		return true
+	}
+	weekdayDate := time.Now().AddDate(0, 0, daysDiff)
+	cmd.SetDue(weekdayDate.Format("2006-01-02"))
+	return true
+}
+func IsValidateDate(date string) (int, bool) {
+	format1 := "2006-01-02" // for "2025-08-20"
+	//	format2 := "fri"
+	format3 := "2006-01" // 2025-01
+	format4 := "2006"    // for "2025"
 	currentTime := time.Now()
 
-	// Check if the due date is a specific datetime format (e.g., "2025-08-20")
-	if _, err := time.Parse(dueFormat1, *cmd.GetDue()); err == nil {
-		return true
+	// check format1
+	if _, err := time.Parse(format1, date); err == nil {
+		return 99, true
 	}
-	// Check if the due date is a specific datetime format (e.g., "2025-08-20 19:10")
-	if _, err := time.Parse(dueFormat2, *cmd.GetDue()); err == nil {
-		return true
+	if _, err := time.Parse(format3, date); err == nil {
+		return 99, true
 	}
-	// Check if the due date is in the time-only format (e.g., "19:20")
-	if _, err := time.Parse(dueFormat3, *cmd.GetDue()); err == nil {
-		cmd.SetDue(currentTime.Format("2006-01-02") + " " + *cmd.GetDue())
-		return true
+	if _, err := time.Parse(format4, date); err == nil {
+		return 99, true
 	}
-	// Check if the due date is a weekday with time (e.g., "wed-19:10", "wed")
-	parts := strings.Split(*cmd.GetDue(), "-")
-	timePart := "23:59" // default
+	// Check if the due date is a weekday with time (e.g. "wed")
+	weekdayMap := map[string]int{
+		"sun": 0, "mon": 1, "tue": 2, "wed": 3, "thu": 4, "fri": 5, "sat": 6,
+	}
+	weekdayIndex, exists := weekdayMap[date]
+	if !exists {
+		return 99, false // invalid weekday
+	}
+	// Find the difference in days between today and the target weekday
+	currentWeekday := int(currentTime.Weekday())
+	daysDiff := (currentWeekday - weekdayIndex + 7) % 7
+	return daysDiff, true
+}
+
+func DateQuery(date string, col string, op string) (string, []string) {
+	parts := strings.Split(date, "-")
+	query := ""
+	var args []string
+	// filter by month
 	if len(parts) == 2 {
-		timePart = parts[1]
+		query += fmt.Sprintf(" AND strftime('%v', %v)%v? and strftime('%v', created_at)%v?", "%m", col, op, "%Y", op)
+		args = append(args, parts[1], parts[0])
+	} else if len(parts) == 1 {
+		// filter by year
+		query += fmt.Sprintf(" and strftime('%v', %v)%v?", "%Y", col, op)
+		args = append(args, date)
+	} else {
+		query += fmt.Sprintf(" AND %v?", col+op)
+		args = append(args, date)
 	}
-	weekday := parts[0]
-	// Check if it's a valid time format
-	if _, err := time.Parse(dueFormat3, timePart); err == nil {
-		// Get the current week day
-		weekdayMap := map[string]int{
-			"sun": 0, "mon": 1, "tue": 2, "wed": 3, "thu": 4, "fri": 5, "sat": 6,
-		}
-		// If the weekday is valid, calculate the date for that weekday
-		weekdayIndex, exists := weekdayMap[weekday]
-		if !exists {
-			return false // invalid weekday
-		}
-		// Find the difference in days between today and the target weekday
-		currentWeekday := int(currentTime.Weekday())
-		daysDiff := (weekdayIndex - currentWeekday + 7) % 7 // handle week wraparound
-		// Get the date for that weekday
-		weekdayDate := currentTime.AddDate(0, 0, daysDiff)
-		cmd.SetDue(weekdayDate.Format("2006-01-02") + " " + timePart)
-		return true
-	}
-	return false
+	return query, args
 }
 
 func ValidateIds(ids []string) []int {
