@@ -10,7 +10,7 @@ import (
 	"github.com/benpsk/todo/db"
 )
 
-const dbPath = "./db/todos.db"
+const dbPath = "./todos.db"
 
 type App struct {
 	db *sql.DB
