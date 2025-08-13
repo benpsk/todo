@@ -16,7 +16,7 @@ type Flagger interface {
 	GetDue() *string
 	SetStatus(string)
 	SetPriority(string)
-	SetDue(string)
+	SetDue(*string)
 }
 
 func Validate(cmd Flagger) bool {
@@ -49,6 +49,8 @@ func Validate(cmd Flagger) bool {
 		if !isValidDueDate(cmd) {
 			msg = append(msg, fmt.Sprintf("Invalid due date %v", cmd.GetDue()))
 		}
+	} else {
+		cmd.SetDue(nil)
 	}
 	if len(msg) > 0 {
 		fmt.Println("Errors:")
@@ -69,8 +71,10 @@ func isValidDueDate(cmd Flagger) bool {
 	if daysDiff == 99 {
 		return true
 	}
+	fmt.Println(daysDiff)
 	weekdayDate := time.Now().AddDate(0, 0, daysDiff)
-	cmd.SetDue(weekdayDate.Format("2006-01-02"))
+	date := weekdayDate.Format("2006-01-02")
+	cmd.SetDue(&date)
 	return true
 }
 func IsValidateDate(date string) (int, bool) {
@@ -98,9 +102,11 @@ func IsValidateDate(date string) (int, bool) {
 	if !exists {
 		return 99, false // invalid weekday
 	}
-	// Find the difference in days between today and the target weekday
 	currentWeekday := int(currentTime.Weekday())
-	daysDiff := (currentWeekday - weekdayIndex + 7) % 7
+	daysDiff := (weekdayIndex - currentWeekday + 7) % 7
+	if daysDiff == 0 {
+		daysDiff = 7 // Next occurrence is in a week if it's the same day
+	}
 	return daysDiff, true
 }
 
@@ -110,14 +116,14 @@ func DateQuery(date string, col string, op string) (string, []string) {
 	var args []string
 	// filter by month
 	if len(parts) == 2 {
-		query += fmt.Sprintf(" AND strftime('%v', %v)%v? and strftime('%v', created_at)%v?", "%m", col, op, "%Y", op)
+		query += fmt.Sprintf(" AND strftime('%v', %v)%v? and strftime('%v', %v)%v?", "%m", col, op, "%Y", col, op)
 		args = append(args, parts[1], parts[0])
 	} else if len(parts) == 1 {
 		// filter by year
 		query += fmt.Sprintf(" and strftime('%v', %v)%v?", "%Y", col, op)
 		args = append(args, date)
 	} else {
-		query += fmt.Sprintf(" AND %v?", col+op)
+		query += fmt.Sprintf(" AND strftime('%v', %v)%v?", "%Y-%m-%d", col, op)
 		args = append(args, date)
 	}
 	return query, args

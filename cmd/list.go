@@ -36,7 +36,7 @@ func (l *listFlag) SetStatus(s string)   { l.status = s }
 func (l *listFlag) GetPriority() string  { return l.priority }
 func (l *listFlag) SetPriority(p string) { l.priority = p }
 func (l *listFlag) GetDue() *string      { return l.due }
-func (l *listFlag) SetDue(d string)      { l.due = &d }
+func (l *listFlag) SetDue(d *string)     { l.due = d }
 
 func parseList() *listFlag {
 	fs := flag.NewFlagSet("list", flag.ExitOnError)
@@ -70,7 +70,7 @@ func (app *App) get(cmd *listFlag) ([]todo, error) {
 		query += " AND priority=?"
 		args = append(args, cmd.priority)
 	}
-	if *cmd.due != "" {
+	if cmd.due != nil {
 		q, argv := service.DateQuery(*cmd.due, "due", "<=")
 		query += q
 		for _, v := range argv {
@@ -131,10 +131,12 @@ func isValidCreated(cmd *listFlag) bool {
 	if daysDiff == 99 {
 		return true
 	}
-	if daysDiff == 0 {
-		daysDiff = -7
+	// Calculate days to previous weekday
+	daysToLast := (7 - daysDiff) % 7
+	if daysToLast == 0 {
+		daysToLast = 7 // Previous occurrence was a week ago if it's the same day
 	}
-	weekdayDate := time.Now().AddDate(0, 0, -daysDiff)
+	weekdayDate := time.Now().AddDate(0, 0, -daysToLast)
 	cmd.created = weekdayDate.Format("2006-01-02")
 	return true
 }

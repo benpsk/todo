@@ -25,7 +25,7 @@ func (a *updateFlag) SetStatus(s string)   { a.status = s }
 func (a *updateFlag) GetPriority() string  { return a.priority }
 func (a *updateFlag) SetPriority(p string) { a.priority = p }
 func (a *updateFlag) GetDue() *string       { return a.due }
-func (a *updateFlag) SetDue(d string)      { a.due = &d }
+func (a *updateFlag) SetDue(d *string)      { a.due = d }
 
 func parseUpdate() *updateFlag {
 	fs := flag.NewFlagSet("update", flag.ExitOnError)
@@ -86,7 +86,7 @@ func (app *App) updateTodo(cmd *updateFlag) error {
 		query += ", priority=?"
 		args = append(args, cmd.priority)
 	}
-	if *cmd.due != "" {
+	if cmd.due != nil {
 		query += ", due=?"
 		args = append(args, cmd.due)
 	}

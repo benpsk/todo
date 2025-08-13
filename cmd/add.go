@@ -23,7 +23,7 @@ func (a *addFlag) SetStatus(s string)   { a.status = s }
 func (a *addFlag) GetPriority() string  { return a.priority }
 func (a *addFlag) SetPriority(p string) { a.priority = p }
 func (a *addFlag) GetDue() *string       { return a.due }
-func (a *addFlag) SetDue(d string)      { a.due = &d }
+func (a *addFlag) SetDue(d *string)      { a.due = d }
 
 func parseAdd() *addFlag {
 	fs := flag.NewFlagSet("add", flag.ExitOnError)
